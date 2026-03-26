@@ -15,6 +15,7 @@ import Unauthorized from './pages/Unauthorized';
 // Lazy loaded — only fetched when the route is visited (fix: issue #4)
 const Dashboard     = lazy(() => import('./pages/Dashboard'));
 const NewPDI        = lazy(() => import('./pages/PDI/NewPDI'));
+const PDIDetail     = lazy(() => import('./pages/PDI/PDIDetail'));
 const TemplatePage  = lazy(() => import('./pages/Template'));
 const UsersPage     = lazy(() => import('./pages/Admin/Users'));
 const AnalyticsPage = lazy(() => import('./pages/Admin/Analytics'));
@@ -51,7 +52,10 @@ export default function App() {
                 >
                   <Route index element={<Dashboard />} />
 
-                  {/* Service Writer + Admin only */}
+                  {/* PDI detail — all active roles (guard inside page) */}
+                <Route path="pdi/:id" element={<PDIDetail />} />
+
+                {/* Service Writer + Admin only */}
                   <Route
                     path="pdi/new"
                     element={
