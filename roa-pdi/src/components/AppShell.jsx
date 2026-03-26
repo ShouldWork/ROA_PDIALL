@@ -49,13 +49,21 @@ function SideNav({ items, currentPath, navigate, userProfile, logout }) {
         },
       }}
     >
-      <Box sx={{ px: 2.5, pt: 3, pb: 2 }}>
-        <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.2 }}>
-          ROA
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 1 }}>
-          Shop Manager
-        </Typography>
+      <Box sx={{ px: 2.5, pt: 3, pb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          component="img"
+          src="/icons/i-ROA_icon_192x192.png"
+          alt="ROA"
+          sx={{ width: 40, height: 40, borderRadius: 1.5, flexShrink: 0 }}
+        />
+        <Box>
+          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.2 }}>
+            ROA
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Shop Manager
+          </Typography>
+        </Box>
       </Box>
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
@@ -153,15 +161,23 @@ function MobileShell({ items, currentPath, navigate, userProfile, logout, childr
         sx={{ bgcolor: 'primary.dark', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
       >
         <Toolbar sx={{ minHeight: 56 }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1 }}>
-              ROA PDI
-            </Typography>
-            {!online && (
-              <Typography variant="caption" sx={{ color: 'warning.light', fontSize: 10 }}>
-                Offline — syncing when connected
+          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              component="img"
+              src="/icons/i-ROA_icon_192x192.png"
+              alt="ROA"
+              sx={{ width: 32, height: 32, borderRadius: 1, flexShrink: 0 }}
+            />
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1 }}>
+                ROA PDI
               </Typography>
-            )}
+              {!online && (
+                <Typography variant="caption" sx={{ color: 'warning.light', fontSize: 10 }}>
+                  Offline — syncing when connected
+                </Typography>
+              )}
+            </Box>
           </Box>
 
           <Avatar
