@@ -1,0 +1,37 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "pdis",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "manufacturer", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pdis",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assignedTo", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pdis",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "item_stats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "manufacturer", "order": "ASCENDING" },
+        { "fieldPath": "flagged", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

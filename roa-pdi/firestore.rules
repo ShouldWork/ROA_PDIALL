@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function role() {
+      return userDoc().role;
+    }
+    function isActive() {
+      return userDoc().active == true;
+    }
+    function isAdmin() {
+      return isActive() && role() == 'admin';
+    }
+    function isServiceWriter() {
+      return isActive() && role() == 'service_writer';
+    }
+    function isTechnician() {
+      return isActive() && role() == 'technician';
+    }
+    function isAdminOrSW() {
+      return isAdmin() || isServiceWriter();
+    }
+
+    // ── Users ───────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdminOrSW());
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && (
+        // User updating their own last-login only
+        (request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLoginAt']))
+        || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ── PDI Template Items ──────────────────────────────────────────────────
+    match /pdi_template_items/{itemId} {
+      allow read: if isSignedIn() && isActive();
+      allow write: if isSignedIn() && isAdminOrSW();
+    }
+
+    // ── Suggested Template Items ────────────────────────────────────────────
+    match /suggested_template_items/{suggId} {
+      allow read: if isSignedIn() && isAdminOrSW();
+      allow create: if isSignedIn() && isActive();  // any active user can suggest
+      allow update: if isSignedIn() && isAdminOrSW();
+      allow delete: if isAdmin();
+    }
+
+    // ── PDIs ────────────────────────────────────────────────────────────────
+    match /pdis/{pdiId} {
+      allow read: if isSignedIn() && isActive() && (
+        isAdminOrSW()
+        || resource.data.assignedTo == request.auth.uid
+      );
+      allow create: if isSignedIn() && isAdminOrSW();
+      allow update: if isSignedIn() && isActive() && (
+        isAdminOrSW()
+        || resource.data.assignedTo == request.auth.uid
+      );
+      allow delete: if isAdmin();
+
+      // PDI item subcollection
+      match /items/{itemId} {
+        allow read: if isSignedIn() && isActive() && (
+          isAdminOrSW()
+          || get(/databases/$(database)/documents/pdis/$(pdiId)).data.assignedTo == request.auth.uid
+        );
+        allow write: if isSignedIn() && isActive() && (
+          isAdminOrSW()
+          || get(/databases/$(database)/documents/pdis/$(pdiId)).data.assignedTo == request.auth.uid
+        );
+      }
+    }
+
+    // ── Item Stats (aggregated analytics) ──────────────────────────────────
+    match /item_stats/{statId} {
+      allow read: if isSignedIn() && isAdmin();
+      allow write: if isSignedIn() && isActive();   // updated on PDI completion
+    }
+
+  }
+}
