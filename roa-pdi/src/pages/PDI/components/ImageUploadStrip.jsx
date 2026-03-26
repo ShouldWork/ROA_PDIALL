@@ -4,14 +4,15 @@ import {
 } from '@mui/material';
 import AddPhotoIcon from '@mui/icons-material/AddPhotoAlternate';
 import CloseIcon    from '@mui/icons-material/Close';
-import { MAX_IMAGES, uploadPDIImage } from '../../../services/imageUpload';
+// H3: consolidated into one import (was split across lines 7 and 9)
+import { MAX_IMAGES, uploadPDIImage, deletePDIImage } from '../../../services/imageUpload';
 import { addImageToItem, removeImageFromItem } from '../../../services/pdi';
-import { deletePDIImage } from '../../../services/imageUpload';
 
 export default function ImageUploadStrip({ pdiId, itemId, images = [], uid, disabled }) {
   const fileRef      = useRef();
   const [uploading, setUploading] = useState(false);
   const [progress,  setProgress]  = useState(0);
+  const [removing,  setRemoving]  = useState(null); // URL currently being removed
   const [error,     setError]     = useState('');
 
   const canAdd = images.length < MAX_IMAGES && !disabled;
@@ -33,9 +34,18 @@ export default function ImageUploadStrip({ pdiId, itemId, images = [], uid, disa
     }
   }
 
+  // H3: guard against concurrent remove taps on the same or different images
   async function handleRemove(url) {
-    await removeImageFromItem(pdiId, itemId, url, uid);
-    await deletePDIImage(url);
+    if (removing) return;
+    setRemoving(url);
+    try {
+      await removeImageFromItem(pdiId, itemId, url, uid);
+      await deletePDIImage(url);
+    } catch {
+      setError('Failed to remove photo. Please try again.');
+    } finally {
+      setRemoving(null);
+    }
   }
 
   return (
@@ -63,17 +73,28 @@ export default function ImageUploadStrip({ pdiId, itemId, images = [], uid, disa
               sx={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
             />
             {!disabled && (
-              <IconButton
-                size="small"
-                onClick={() => handleRemove(url)}
-                sx={{
-                  position: 'absolute', top: 2, right: 2,
-                  bgcolor: 'rgba(0,0,0,0.55)', color: '#fff', p: 0.25,
-                  '&:hover': { bgcolor: 'rgba(0,0,0,0.75)' },
-                }}
-              >
-                <CloseIcon sx={{ fontSize: 12 }} />
-              </IconButton>
+              removing === url ? (
+                <Box sx={{
+                  position: 'absolute', inset: 0, display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  bgcolor: 'rgba(0,0,0,0.45)',
+                }}>
+                  <CircularProgress size={16} sx={{ color: '#fff' }} />
+                </Box>
+              ) : (
+                <IconButton
+                  size="small"
+                  onClick={() => handleRemove(url)}
+                  disabled={!!removing}
+                  sx={{
+                    position: 'absolute', top: 2, right: 2,
+                    bgcolor: 'rgba(0,0,0,0.55)', color: '#fff', p: 0.25,
+                    '&:hover': { bgcolor: 'rgba(0,0,0,0.75)' },
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 12 }} />
+                </IconButton>
+              )
             )}
           </Box>
         ))}

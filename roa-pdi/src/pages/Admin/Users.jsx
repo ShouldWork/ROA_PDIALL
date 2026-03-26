@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Box, Typography, Card, CardContent, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, Select, MenuItem,
@@ -110,6 +111,7 @@ function ActivateDialog({ user, open, onClose, onSaved }) {
 }
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
   const [users,   setUsers]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
@@ -119,10 +121,10 @@ export default function UsersPage() {
   const [activateTarget, setActivateTarget] = useState(null);
 
   useEffect(() => {
-    const unsub = subscribeAllUsers((list) => {
-      setUsers(list);
-      setLoading(false);
-    });
+    const unsub = subscribeAllUsers(
+      (list) => { setUsers(list); setLoading(false); },
+      (err)  => { setError(err.message || 'Failed to load users.'); setLoading(false); },
+    );
     return unsub;
   }, []);
 
@@ -245,13 +247,15 @@ export default function UsersPage() {
                 {filtered.map((u) => {
                   const isPending = !u.active && !u.role;
                   const isBusy    = !!saving[u.id];
+                  // H6: prevent admin from deactivating or demoting their own account
+                  const isSelf    = u.id === currentUser?.uid;
 
                   return (
                     <TableRow
                       key={u.id}
                       sx={{
                         '&:last-child td': { border: 0 },
-                        bgcolor: isPending ? 'warning.50' : undefined,
+                        bgcolor: isPending ? '#FFFDE7' : undefined, // H7: warning.50 is not a valid MUI token
                       }}
                     >
                       {/* User */}
@@ -276,7 +280,7 @@ export default function UsersPage() {
                         {isPending ? (
                           <RoleChip role={null} />
                         ) : (
-                          <FormControl size="small" variant="standard" disabled={isBusy}>
+                          <FormControl size="small" variant="standard" disabled={isBusy || isSelf}>
                             <Select
                               value={u.role ?? ''}
                               onChange={(e) => handleRoleChange(u.id, e.target.value)}
@@ -306,6 +310,9 @@ export default function UsersPage() {
                         <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
                           {isBusy ? (
                             <CircularProgress size={18} sx={{ mx: 1 }} />
+                          ) : isSelf ? (
+                            // H6: admins cannot deactivate their own account
+                            <Typography variant="caption" color="text.disabled">You</Typography>
                           ) : isPending ? (
                             <Tooltip title="Activate user">
                               <IconButton

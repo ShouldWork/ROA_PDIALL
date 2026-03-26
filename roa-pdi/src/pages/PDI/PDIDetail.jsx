@@ -51,10 +51,14 @@ export default function PDIDetail() {
           break;
         case 'completed':
           await completePDI(id, user.uid, currentElapsed);
-          await updateItemStats(items, pdi.manufacturer).catch(() => {}); // non-blocking
+          updateItemStats(items, pdi.manufacturer).catch(() => {}); // non-blocking
           break;
         case 'unable_to_complete':
           await markUnableToComplete(id, user.uid, currentElapsed);
+          break;
+        default:
+          // M8: guard against unexpected status values from future transitions
+          console.warn('Unhandled transition status:', newStatus);
           break;
       }
     } catch (err) {

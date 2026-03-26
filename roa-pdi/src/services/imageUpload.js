@@ -1,7 +1,7 @@
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-const MAX_IMAGES = 5;
+const MAX_IMAGES  = 5;
 const MAX_SIZE_MB = 10;
 
 export { MAX_IMAGES };
@@ -13,12 +13,20 @@ export { MAX_IMAGES };
  */
 export function uploadPDIImage(pdiId, itemId, file, onProgress) {
   return new Promise((resolve, reject) => {
+    // M3: validate MIME type client-side before attempting upload
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Only image files are allowed.'));
+      return;
+    }
+
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
       reject(new Error(`Image must be under ${MAX_SIZE_MB} MB.`));
       return;
     }
 
-    const ext      = file.name.split('.').pop() || 'jpg';
+    // H2: guard against filenames with no extension (e.g. "photo" → "photo.jpg")
+    const dotIndex = file.name.lastIndexOf('.');
+    const ext      = dotIndex > 0 ? file.name.slice(dotIndex + 1) : 'jpg';
     const filename = `${Date.now()}.${ext}`;
     const path     = `pdi_images/${pdiId}/${itemId}/${filename}`;
     const storageRef = ref(storage, path);

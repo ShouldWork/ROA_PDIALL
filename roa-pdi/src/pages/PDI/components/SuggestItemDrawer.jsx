@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Drawer, Box, Typography, TextField, Button, Stack,
   IconButton, Fab, Alert, CircularProgress,
@@ -18,16 +18,19 @@ export default function SuggestItemDrawer({ manufacturer }) {
   const [success,    setSuccess]    = useState(false);
   const [error,      setError]      = useState('');
 
-  function handleClose() {
-    setOpen(false);
-    setTimeout(() => {
+  // M4: useEffect with cleanup replaces the bare setTimeout in handleClose,
+  // ensuring the timer is cancelled if the component unmounts before it fires.
+  useEffect(() => {
+    if (open) return;
+    const id = setTimeout(() => {
       setCategory('');
       setSubcategory('');
       setItemText('');
       setSuccess(false);
       setError('');
-    }, 300);
-  }
+    }, 300); // matches MUI drawer close transition
+    return () => clearTimeout(id);
+  }, [open]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -71,7 +74,7 @@ export default function SuggestItemDrawer({ manufacturer }) {
       <Drawer
         anchor="bottom"
         open={open}
-        onClose={handleClose}
+        onClose={() => setOpen(false)}
         PaperProps={{ sx: { borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '85vh' } }}
       >
         <Box sx={{ p: 3 }}>
@@ -81,7 +84,7 @@ export default function SuggestItemDrawer({ manufacturer }) {
           </Box>
           <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
             <Typography variant="h6" fontWeight={700}>Suggest New Item</Typography>
-            <IconButton onClick={handleClose} size="small"><CloseIcon /></IconButton>
+            <IconButton onClick={() => setOpen(false)} size="small"><CloseIcon /></IconButton>
           </Stack>
 
           <Typography variant="body2" color="text.secondary" mb={2}>
@@ -94,13 +97,14 @@ export default function SuggestItemDrawer({ manufacturer }) {
               <Alert severity="success" sx={{ mb: 2 }}>
                 Suggestion submitted! An admin will review it.
               </Alert>
-              <Button variant="outlined" onClick={handleClose}>Close</Button>
+              <Button variant="outlined" onClick={() => setOpen(false)}>Close</Button>
             </Box>
           ) : (
             <form onSubmit={handleSubmit} noValidate>
               <Stack spacing={2}>
                 {error && <Alert severity="error">{error}</Alert>}
 
+                {/* M4: maxLength prevents arbitrarily large submissions */}
                 <TextField
                   label="Category"
                   placeholder="e.g. Electrical"
@@ -108,6 +112,7 @@ export default function SuggestItemDrawer({ manufacturer }) {
                   onChange={(e) => setCategory(e.target.value)}
                   size="small"
                   fullWidth
+                  inputProps={{ maxLength: 100 }}
                 />
                 <TextField
                   label="Subcategory"
@@ -116,6 +121,7 @@ export default function SuggestItemDrawer({ manufacturer }) {
                   onChange={(e) => setSubcategory(e.target.value)}
                   size="small"
                   fullWidth
+                  inputProps={{ maxLength: 100 }}
                 />
                 <TextField
                   label="Inspection Item"
@@ -126,6 +132,7 @@ export default function SuggestItemDrawer({ manufacturer }) {
                   rows={3}
                   fullWidth
                   required
+                  inputProps={{ maxLength: 500 }}
                 />
                 <Button
                   type="submit"

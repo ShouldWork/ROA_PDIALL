@@ -7,6 +7,22 @@ import {
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// L3: Validate required env vars at startup so a missing .env gives a clear
+// error instead of an obscure Firebase internal failure.
+const REQUIRED_ENV = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_STORAGE_BUCKET',
+  'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  'VITE_FIREBASE_APP_ID',
+];
+REQUIRED_ENV.forEach((key) => {
+  if (!import.meta.env[key]) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+});
+
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,

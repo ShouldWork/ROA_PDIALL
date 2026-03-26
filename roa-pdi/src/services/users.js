@@ -3,12 +3,14 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
-export function subscribeAllUsers(callback) {
+// M1: onError callback is now accepted so callers can surface listener failures.
+export function subscribeAllUsers(callback, onError) {
   const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => {
-    const users = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(users);
-  });
+  return onSnapshot(
+    q,
+    (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    onError ?? ((err) => console.error('subscribeAllUsers error:', err)),
+  );
 }
 
 export async function updateUserRole(uid, role) {

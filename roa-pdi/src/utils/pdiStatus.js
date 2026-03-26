@@ -75,21 +75,26 @@ export const ACCESSORY_RESULT_CONFIG = {
   not_applicable: { label: 'N/A',         bg: '#757575', text: '#fff' },
 };
 
+// L1: single-pass reduce instead of three separate filter calls over the same array
 export function getProgressStats(items) {
-  const checklist   = items.filter((i) => !i.isAccessory);
-  const accessories = items.filter((i) => i.isAccessory);
+  let total = 0, totalAccessories = 0, evaluated = 0, passed = 0, failed = 0;
 
-  const evaluated = checklist.filter((i) => i.result && i.result !== 'untested');
-  const passed    = checklist.filter((i) => i.result === 'pass');
-  const failed    = checklist.filter((i) => i.result === 'fail');
+  for (const item of items) {
+    if (item.isAccessory) { totalAccessories++; continue; }
+    total++;
+    if (!item.result || item.result === 'untested') continue;
+    evaluated++;
+    if (item.result === 'pass') passed++;
+    if (item.result === 'fail') failed++;
+  }
 
   return {
-    total:              checklist.length,
-    totalAccessories:   accessories.length,
-    evaluated:          evaluated.length,
-    passed:             passed.length,
-    failed:             failed.length,
-    passRate:           evaluated.length ? Math.round((passed.length / evaluated.length) * 100) : 0,
-    progressPct:        checklist.length  ? Math.round((evaluated.length / checklist.length) * 100) : 0,
+    total,
+    totalAccessories,
+    evaluated,
+    passed,
+    failed,
+    passRate:    evaluated ? Math.round((passed    / evaluated) * 100) : 0,
+    progressPct: total     ? Math.round((evaluated / total)    * 100) : 0,
   };
 }

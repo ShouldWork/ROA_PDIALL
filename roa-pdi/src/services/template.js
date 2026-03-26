@@ -35,9 +35,11 @@ export function groupItemsByCategory(items) {
     categoryMap.get(item.category).push(item);
   }
 
+  // L2: items already arrive ordered by sort from the Firestore query,
+  // so the extra .sort() here is redundant and removed.
   const categories = Array.from(categoryMap.entries()).map(([name, catItems]) => ({
     name,
-    items: catItems.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)),
+    items: catItems,
   }));
 
   return { categories, accessories };

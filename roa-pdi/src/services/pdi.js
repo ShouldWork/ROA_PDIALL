@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, updateDoc, getDocs, runTransaction,
+  collection, doc, updateDoc, getDocs, runTransaction,
   query, where, writeBatch, serverTimestamp, arrayUnion, arrayRemove, increment,
 } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -23,6 +23,11 @@ export async function isRONumberUnique(roNumber) {
  * - progressSummary is denormalized on the PDI doc so the dashboard can
  *   show progress without loading any subcollection data.
  * - assignedTo is denormalized onto each item for Firestore rules.
+ *
+ * C3: Atomic creation — the PDI doc and all items are written in the same
+ * batch(es). The PDI ref is pre-allocated with doc() so it can be included
+ * in the first batch rather than created first with a separate addDoc() call.
+ * If any batch fails the PDI document is never committed.
  */
 export async function createPDI(
   { repairOrderNumber, manufacturer, assignedTo, technicianName, createdBy },
@@ -30,7 +35,10 @@ export async function createPDI(
 ) {
   const checklistTotal = templateItems.filter((i) => !i.isAccessory).length;
 
-  const pdiRef = await addDoc(collection(db, 'pdis'), {
+  // Pre-allocate the PDI ref — no Firestore call, just generates a local ID.
+  const pdiRef = doc(collection(db, 'pdis'));
+
+  const pdiData = {
     repairOrderNumber: repairOrderNumber.trim(),
     manufacturer,
     status:            'not_started',
@@ -42,6 +50,9 @@ export async function createPDI(
     lastResumedAt:     null,
     completedAt:       null,
     timeElapsedSeconds: 0,
+    // M5: statusHistory uses client ISO timestamp because serverTimestamp()
+    // sentinels cannot be nested inside arrayUnion objects — known Firestore
+    // limitation. Do not compare these against server-timestamp fields.
     statusHistory: [{
       status:    'not_started',
       changedAt: new Date().toISOString(),
@@ -56,12 +67,21 @@ export async function createPDI(
     },
     reportUrl:         null,
     internalReportUrl: null,
-  });
+  };
 
-  // Batch-write items (max 490 per batch to stay under 500 limit)
-  const BATCH_SIZE = 490;
-  for (let i = 0; i < templateItems.length; i += BATCH_SIZE) {
+  // First batch includes the PDI doc itself + the first chunk of items.
+  // Subsequent batches (if > 489 items) contain only items.
+  const BATCH_SIZE = 489; // 489 items + 1 PDI doc = 490, safely under the 500 limit
+  let firstBatch = true;
+
+  for (let i = 0; i < templateItems.length || firstBatch; i += BATCH_SIZE) {
     const batch = writeBatch(db);
+
+    if (firstBatch) {
+      batch.set(pdiRef, pdiData);
+      firstBatch = false;
+    }
+
     for (const item of templateItems.slice(i, i + BATCH_SIZE)) {
       const itemRef = doc(collection(db, 'pdis', pdiRef.id, 'items'));
       batch.set(itemRef, {
@@ -78,6 +98,7 @@ export async function createPDI(
         updatedBy:   null,
       });
     }
+
     await batch.commit();
   }
 
@@ -151,8 +172,12 @@ export async function updateItemResult(pdiId, itemId, newResult, uid) {
 
   await runTransaction(db, async (tx) => {
     const itemSnap = await tx.get(itemRef);
-    const oldResult   = itemSnap.data()?.result  ?? null;
-    const isAccessory = itemSnap.data()?.isAccessory ?? false;
+
+    // C4: abort if the item was deleted between read and write
+    if (!itemSnap.exists()) throw new Error('Item not found');
+
+    const oldResult   = itemSnap.data().result      ?? null;
+    const isAccessory = itemSnap.data().isAccessory ?? false;
 
     tx.update(itemRef, {
       result:    newResult,

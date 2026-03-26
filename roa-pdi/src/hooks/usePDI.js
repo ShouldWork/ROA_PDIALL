@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { doc, collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '../firebase';
 import { groupItemsByCategory } from '../services/template';
@@ -13,14 +13,22 @@ export function usePDI(pdiId) {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
 
+  // L6: single counter ref instead of two boolean closure variables.
+  const loadedCount = useRef(0);
+
   useEffect(() => {
     if (!pdiId) return;
 
-    let pdiLoaded   = false;
-    let itemsLoaded = false;
+    // M2: Reset state when pdiId changes so stale data never bleeds through.
+    setPdi(null);
+    setItems([]);
+    setError(null);
+    setLoading(true);
+    loadedCount.current = 0;
 
     const checkDone = () => {
-      if (pdiLoaded && itemsLoaded) setLoading(false);
+      loadedCount.current += 1;
+      if (loadedCount.current >= 2) setLoading(false);
     };
 
     // PDI document listener
@@ -33,7 +41,6 @@ export function usePDI(pdiId) {
           return;
         }
         setPdi({ id: snap.id, ...snap.data() });
-        pdiLoaded = true;
         checkDone();
       },
       (err) => { setError(err); setLoading(false); },
@@ -50,7 +57,6 @@ export function usePDI(pdiId) {
       itemsQ,
       (snap) => {
         setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        itemsLoaded = true;
         checkDone();
       },
       (err) => { setError(err); setLoading(false); },
@@ -62,7 +68,12 @@ export function usePDI(pdiId) {
     };
   }, [pdiId]);
 
-  const { categories, accessories } = groupItemsByCategory(items);
+  // H1: memoize so groupItemsByCategory only runs when items actually change,
+  // not on every render triggered by unrelated state (e.g. tab changes).
+  const { categories, accessories } = useMemo(
+    () => groupItemsByCategory(items),
+    [items],
+  );
 
   return { pdi, items, categories, accessories, loading, error };
 }

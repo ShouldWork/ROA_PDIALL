@@ -29,6 +29,31 @@ const MFR_FILTERS = [
   { value: 'MDC',   label: 'MDC' },
 ];
 
+// L5: extracted from inline IIFE so JSX stays readable
+function PDIProgress({ summary: s }) {
+  if (!s || s.total === 0) return null;
+  const evaluated   = (s.pass ?? 0) + (s.fail ?? 0) + (s.not_applicable ?? 0);
+  const progressPct = Math.round((evaluated / s.total) * 100);
+  const passRate    = evaluated > 0 ? Math.round((s.pass / evaluated) * 100) : 0;
+  return (
+    <Box>
+      <Stack direction="row" justifyContent="space-between" mb={0.5}>
+        <Typography variant="caption" color="text.secondary">
+          {evaluated} / {s.total} evaluated
+        </Typography>
+        <Typography variant="caption" fontWeight={600} color="success.main">
+          {passRate}% pass
+        </Typography>
+      </Stack>
+      <LinearProgress
+        variant="determinate"
+        value={progressPct}
+        sx={{ height: 6, borderRadius: 3 }}
+      />
+    </Box>
+  );
+}
+
 function StatCard({ label, value, color }) {
   return (
     <Card sx={{ height: '100%' }}>
@@ -95,30 +120,7 @@ function PDICard({ pdi, onClick }) {
           </Stack>
 
           {/* Progress — only once items have been evaluated */}
-          {(() => {
-            const s = pdi.progressSummary;
-            if (!s || s.total === 0) return null;
-            const evaluated   = (s.pass ?? 0) + (s.fail ?? 0) + (s.not_applicable ?? 0);
-            const progressPct = Math.round((evaluated / s.total) * 100);
-            const passRate    = evaluated > 0 ? Math.round((s.pass / evaluated) * 100) : 0;
-            return (
-              <Box>
-                <Stack direction="row" justifyContent="space-between" mb={0.5}>
-                  <Typography variant="caption" color="text.secondary">
-                    {evaluated} / {s.total} evaluated
-                  </Typography>
-                  <Typography variant="caption" fontWeight={600} color="success.main">
-                    {passRate}% pass
-                  </Typography>
-                </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={progressPct}
-                  sx={{ height: 6, borderRadius: 3 }}
-                />
-              </Box>
-            );
-          })()}
+          <PDIProgress summary={pdi.progressSummary} />
         </CardContent>
       </CardActionArea>
     </Card>

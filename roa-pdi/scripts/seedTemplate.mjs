@@ -111,7 +111,10 @@ async function seed() {
 
     for (const item of slice) {
       const ref = db.collection('pdi_template_items').doc(item.templateId);
-      batch.set(ref, item, { merge: false });
+      // M6: merge:true so re-running the seed updates fields without destroying
+      // any manually-added fields (e.g. adminNotes). To fully replace a doc,
+      // delete it in Firestore first.
+      batch.set(ref, item, { merge: true });
     }
 
     await batch.commit();
@@ -131,10 +134,12 @@ async function seed() {
   }
 
   console.log('\n✅  Seed complete.');
-  process.exit(0);
 }
 
-seed().catch((err) => {
-  console.error('Seed failed:', err);
-  process.exit(1);
-});
+// M6: process.exit belongs in the caller, not inside the function
+seed()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Seed failed:', err);
+    process.exit(1);
+  });
