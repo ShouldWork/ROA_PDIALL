@@ -65,11 +65,13 @@ export default function NewPDI() {
     setSubmitError('');
     try {
       const items = await fetchTemplateItems(manufacturer);
+      const tech  = technicians.find((t) => t.id === assignedTo);
       const pdiId = await createPDI(
         {
           repairOrderNumber: roNumber.trim(),
           manufacturer,
           assignedTo,
+          technicianName: tech?.displayName ?? '',
           createdBy: user.uid,
         },
         items,

@@ -11,7 +11,7 @@ import AccessTimeIcon  from '@mui/icons-material/AccessTime';
 import PersonIcon      from '@mui/icons-material/Person';
 import { usePDIList }  from '../../hooks/usePDIList';
 import { useAuth }     from '../../contexts/AuthContext';
-import { STATUS_CONFIG, getProgressStats } from '../../utils/pdiStatus';
+import { STATUS_CONFIG } from '../../utils/pdiStatus';
 import { formatDate }  from '../../utils/time';
 
 const STATUS_FILTERS = [
@@ -95,23 +95,30 @@ function PDICard({ pdi, onClick }) {
           </Stack>
 
           {/* Progress — only once items have been evaluated */}
-          {pdi._progress != null && pdi._progress.total > 0 && (
-            <Box>
-              <Stack direction="row" justifyContent="space-between" mb={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  {pdi._progress.evaluated} / {pdi._progress.total} evaluated
-                </Typography>
-                <Typography variant="caption" fontWeight={600} color="success.main">
-                  {pdi._progress.passRate}% pass
-                </Typography>
-              </Stack>
-              <LinearProgress
-                variant="determinate"
-                value={pdi._progress.progressPct}
-                sx={{ height: 6, borderRadius: 3 }}
-              />
-            </Box>
-          )}
+          {(() => {
+            const s = pdi.progressSummary;
+            if (!s || s.total === 0) return null;
+            const evaluated   = (s.pass ?? 0) + (s.fail ?? 0) + (s.not_applicable ?? 0);
+            const progressPct = Math.round((evaluated / s.total) * 100);
+            const passRate    = evaluated > 0 ? Math.round((s.pass / evaluated) * 100) : 0;
+            return (
+              <Box>
+                <Stack direction="row" justifyContent="space-between" mb={0.5}>
+                  <Typography variant="caption" color="text.secondary">
+                    {evaluated} / {s.total} evaluated
+                  </Typography>
+                  <Typography variant="caption" fontWeight={600} color="success.main">
+                    {passRate}% pass
+                  </Typography>
+                </Stack>
+                <LinearProgress
+                  variant="determinate"
+                  value={progressPct}
+                  sx={{ height: 6, borderRadius: 3 }}
+                />
+              </Box>
+            );
+          })()}
         </CardContent>
       </CardActionArea>
     </Card>
