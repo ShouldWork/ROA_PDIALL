@@ -1,6 +1,6 @@
 import {
   collection, doc, query, where, orderBy, getDocs, onSnapshot,
-  addDoc, updateDoc, deleteDoc, setDoc, serverTimestamp,
+  updateDoc, deleteDoc, setDoc, writeBatch, serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -114,20 +114,20 @@ export function subscribeSuggestions(callback, onError) {
 }
 
 /**
- * Approve a suggestion: creates a pdi_template_items doc and marks the
- * suggestion approved in one logical operation (two writes — Firestore rules
- * don't allow cross-collection transactions, but both writes are idempotent
- * on retry).
+ * Approve a suggestion: atomically creates a pdi_template_items doc and
+ * marks the suggestion approved in a single writeBatch commit.
  */
 export async function approveSuggestion(suggId, item, uid) {
-  const ref = doc(collection(db, 'pdi_template_items'));
-  await setDoc(ref, {
+  const ref   = doc(collection(db, 'pdi_template_items'));
+  const batch = writeBatch(db);
+
+  batch.set(ref, {
     templateId:       ref.id,
     manufacturers:    [item.manufacturer],
-    category:         (item.category  || '').trim(),
+    category:         (item.category    || '').trim(),
     subcategory:      (item.subcategory || '').trim(),
     type:             'Check',
-    itemText:         (item.itemText  || '').trim(),
+    itemText:         (item.itemText    || '').trim(),
     defaultActive:    true,
     isAccessory:      false,
     location:         '',
@@ -140,13 +140,14 @@ export async function approveSuggestion(suggId, item, uid) {
     updatedBy:        uid,
   });
 
-  await updateDoc(doc(db, 'suggested_template_items', suggId), {
-    status:             'approved',
-    reviewedBy:         uid,
-    reviewedAt:         serverTimestamp(),
-    createdTemplateId:  ref.id,
+  batch.update(doc(db, 'suggested_template_items', suggId), {
+    status:            'approved',
+    reviewedBy:        uid,
+    reviewedAt:        serverTimestamp(),
+    createdTemplateId: ref.id,
   });
 
+  await batch.commit();
   return ref.id;
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box, Typography, Accordion, AccordionSummary, AccordionDetails,
   Stack, Switch, IconButton, Tooltip, Chip, CircularProgress,
@@ -167,12 +167,15 @@ export default function TemplateItemList({ items, onEdit, loading }) {
 
   if (loading) return null; // parent shows skeleton
 
-  // Group by category
-  const categoryMap = new Map();
-  for (const item of items) {
-    if (!categoryMap.has(item.category)) categoryMap.set(item.category, []);
-    categoryMap.get(item.category).push(item);
-  }
+  // Group by category — memoized so the loop doesn't re-run on every render
+  const categoryMap = useMemo(() => {
+    const map = new Map();
+    for (const item of items) {
+      if (!map.has(item.category)) map.set(item.category, []);
+      map.get(item.category).push(item);
+    }
+    return map;
+  }, [items]);
 
   if (categoryMap.size === 0) {
     return (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box, Typography, Tabs, Tab, Badge, Button, Skeleton,
-  Alert, Stack, Card, CardContent, Fab,
+  Alert, Stack, Card, Fab,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from '../../contexts/AuthContext';
@@ -56,15 +56,14 @@ export default function TemplatePage() {
   const openNew  = useCallback(() => { setEditingItem(null); setDrawerOpen(true); }, []);
   const openEdit = useCallback((item) => { setEditingItem(item); setDrawerOpen(true); }, []);
 
-  async function handleSave(formData) {
+  const handleSave = useCallback(async (formData) => {
     if (editingItem) {
       await updateTemplateItem(editingItem.id, formData, user.uid);
     } else {
       await createTemplateItem(formData, user.uid);
     }
-  }
+  }, [editingItem, user.uid]);
 
-  const isLoading = itemsLoading || suggestionsLoading;
   const isSuggestionsTab = activeTab === MFR_TABS.length;
 
   return (
@@ -134,17 +133,24 @@ export default function TemplatePage() {
         </Tabs>
       </Card>
 
-      {/* Loading skeletons */}
-      {isLoading && (
+      {/* Loading skeletons — each tab tracks its own data source */}
+      {!isSuggestionsTab && itemsLoading && (
         <Box>
           {[1, 2, 3].map((n) => (
             <Skeleton key={n} variant="rectangular" height={52} sx={{ borderRadius: 1, mb: 0.5 }} />
           ))}
         </Box>
       )}
+      {isSuggestionsTab && suggestionsLoading && (
+        <Box>
+          {[1, 2].map((n) => (
+            <Skeleton key={n} variant="rectangular" height={80} sx={{ borderRadius: 1, mb: 1 }} />
+          ))}
+        </Box>
+      )}
 
       {/* Manufacturer item lists */}
-      {!isLoading && !isSuggestionsTab && (
+      {!isSuggestionsTab && !itemsLoading && (
         <TemplateItemList
           items={filteredItems}
           onEdit={openEdit}
@@ -153,7 +159,7 @@ export default function TemplatePage() {
       )}
 
       {/* Suggestions queue */}
-      {!isLoading && isSuggestionsTab && (
+      {isSuggestionsTab && !suggestionsLoading && (
         <SuggestionQueue
           suggestions={suggestions}
           loading={false}

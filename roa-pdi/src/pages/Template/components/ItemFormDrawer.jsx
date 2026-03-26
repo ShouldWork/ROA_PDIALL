@@ -204,7 +204,7 @@ export default function ItemFormDrawer({ open, onClose, onSave, item, allItems =
             label="Sort Order"
             type="number"
             value={form.sort}
-            onChange={(e) => set('sort', parseInt(e.target.value, 10) || 0)}
+            onChange={(e) => { const n = parseInt(e.target.value, 10); set('sort', Number.isNaN(n) ? 999 : n); }}
             size="small"
             fullWidth
             inputProps={{ min: 0, max: 9999 }}
