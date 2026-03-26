@@ -41,7 +41,11 @@ service cloud.firestore {
 
     // ── Users ───────────────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid || isAdminOrSW());
+      // get: own doc or admin/SW; list: admin/SW only (no per-document uid
+      // condition in the list path so Firestore can evaluate collection
+      // queries unambiguously without falling back to permission-denied).
+      allow get:    if isSignedIn() && (request.auth.uid == uid || isAdminOrSW());
+      allow list:   if isSignedIn() && isAdminOrSW();
       allow create: if isSignedIn() && request.auth.uid == uid;
       allow update: if isSignedIn() && (
         // User updating their own last-login only
