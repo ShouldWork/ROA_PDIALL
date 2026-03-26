@@ -42,37 +42,18 @@ export const TRANSITION_LABELS = {
   unable_to_complete: 'Unable to Complete',
 };
 
+// bg values use MUI sx theme tokens so they adapt to both light and dark mode
 export const RESULT_CONFIG = {
-  pass: {
-    label: 'Pass',
-    bg: '#2E7D32',
-    text: '#fff',
-    variant: 'contained',
-  },
-  fail: {
-    label: 'Fail',
-    bg: '#C62828',
-    text: '#fff',
-    variant: 'contained',
-  },
-  not_applicable: {
-    label: 'N/A',
-    bg: '#757575',
-    text: '#fff',
-    variant: 'contained',
-  },
-  untested: {
-    label: 'Untested',
-    bg: 'transparent',
-    text: '#616161',
-    variant: 'outlined',
-  },
+  pass:           { label: 'Pass',     bg: 'success.main',  text: '#fff' },
+  fail:           { label: 'Fail',     bg: 'error.main',    text: '#fff' },
+  not_applicable: { label: 'N/A',      bg: 'text.disabled', text: '#fff' },
+  untested:       { label: 'Untested', bg: 'transparent',   text: 'text.secondary' },
 };
 
 export const ACCESSORY_RESULT_CONFIG = {
-  present:        { label: 'Present',     bg: '#2E7D32', text: '#fff' },
-  not_present:    { label: 'Not Present', bg: '#C62828', text: '#fff' },
-  not_applicable: { label: 'N/A',         bg: '#757575', text: '#fff' },
+  present:        { label: 'Present',     bg: 'success.main',  text: '#fff' },
+  not_present:    { label: 'Not Present', bg: 'error.main',    text: '#fff' },
+  not_applicable: { label: 'N/A',         bg: 'text.disabled', text: '#fff' },
 };
 
 // L1: single-pass reduce instead of three separate filter calls over the same array

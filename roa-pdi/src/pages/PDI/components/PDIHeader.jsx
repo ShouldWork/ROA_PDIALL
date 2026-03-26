@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Typography, Chip, Stack, LinearProgress, Button,
-  Menu, MenuItem, Divider, CircularProgress,
+  Menu, MenuItem, Divider, CircularProgress, useTheme,
 } from '@mui/material';
 import TimerIcon      from '@mui/icons-material/Timer';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -22,6 +22,8 @@ export default function PDIHeader({ pdi, items, onTransition, transitioning }) {
     return () => clearInterval(id);
   }, [pdi]);
 
+  const theme       = useTheme();
+  const isDark      = theme.palette.mode === 'dark';
   const cfg         = STATUS_CONFIG[pdi?.status] ?? STATUS_CONFIG.not_started;
   const transitions = ALLOWED_TRANSITIONS[pdi?.status] ?? [];
   const stats       = getProgressStats(items);
@@ -61,8 +63,12 @@ export default function PDIHeader({ pdi, items, onTransition, transitioning }) {
               size="small"
               sx={{
                 fontWeight: 600, fontSize: 11,
-                bgcolor: pdi?.manufacturer === 'PAUSE' ? '#E3F2FD' : '#E8F5E9',
-                color:   pdi?.manufacturer === 'PAUSE' ? '#1565C0' : '#2E7D32',
+                bgcolor: pdi?.manufacturer === 'PAUSE'
+                  ? (isDark ? 'rgba(96,165,250,0.15)' : '#EFF6FF')
+                  : (isDark ? 'rgba(74,222,128,0.12)' : '#F0FDF4'),
+                color: pdi?.manufacturer === 'PAUSE'
+                  ? (isDark ? '#93C5FD' : '#1D4ED8')
+                  : (isDark ? '#4ADE80' : '#15803D'),
               }}
             />
             <Chip

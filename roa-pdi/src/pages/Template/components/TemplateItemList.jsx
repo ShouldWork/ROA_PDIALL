@@ -3,7 +3,7 @@ import {
   Box, Typography, Accordion, AccordionSummary, AccordionDetails,
   Stack, Switch, IconButton, Tooltip, Chip, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  Button, Alert,
+  Button, Alert, useTheme,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditIcon       from '@mui/icons-material/Edit';
@@ -57,7 +57,9 @@ function DeleteDialog({ item, open, onClose, onDeleted }) {
 }
 
 function ItemRow({ item, onEdit }) {
-  const { user } = useAuth();
+  const { user }   = useAuth();
+  const theme      = useTheme();
+  const isDark     = theme.palette.mode === 'dark';
   const [toggling,    setToggling]    = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -108,8 +110,12 @@ function ItemRow({ item, onEdit }) {
                 size="small"
                 sx={{
                   fontSize: 10, height: 18,
-                  bgcolor: m === 'PAUSE' ? '#E3F2FD' : '#E8F5E9',
-                  color:   m === 'PAUSE' ? '#1565C0' : '#2E7D32',
+                  bgcolor: m === 'PAUSE'
+                    ? (isDark ? 'rgba(96,165,250,0.15)' : '#EFF6FF')
+                    : (isDark ? 'rgba(74,222,128,0.12)' : '#F0FDF4'),
+                  color: m === 'PAUSE'
+                    ? (isDark ? '#93C5FD' : '#1D4ED8')
+                    : (isDark ? '#4ADE80' : '#15803D'),
                 }}
               />
             ))}

@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
-import theme from './theme';
+import { CssBaseline, CircularProgress, Box } from '@mui/material';
+import { AppThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ConnectionProvider } from './contexts/ConnectionContext';
 import AuthGuard from './components/AuthGuard';
@@ -30,7 +30,7 @@ function PageLoader() {
 
 export default function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <AppThemeProvider>
       <CssBaseline />
       <ConnectionProvider>
         <AuthProvider>
@@ -99,6 +99,6 @@ export default function App() {
           </BrowserRouter>
         </AuthProvider>
       </ConnectionProvider>
-    </ThemeProvider>
+    </AppThemeProvider>
   );
 }

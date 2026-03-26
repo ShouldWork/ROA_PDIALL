@@ -18,18 +18,18 @@ export default function Login() {
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: 'primary.dark',
+        bgcolor: 'background.default',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
       }}
     >
-      <Card sx={{ maxWidth: 400, width: '100%', borderRadius: 3 }}>
+      <Card sx={{ maxWidth: 400, width: '100%' }}>
         <CardContent sx={{ p: 4 }}>
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h4" fontWeight={700} color="primary.dark" gutterBottom>
+            <Typography variant="h4" fontWeight={700} gutterBottom>
               ROA PDI
             </Typography>
             <Typography variant="body2" color="text.secondary">

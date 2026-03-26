@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Box, Typography, Card, CardContent, Stack, Chip, Button,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Alert, CircularProgress,
+  Alert, CircularProgress, useTheme,
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -136,6 +136,8 @@ function ApproveDialog({ suggestion, open, onClose }) {
 export default function SuggestionQueue({ suggestions, loading, error }) {
   const [approveTarget, setApproveTarget] = useState(null);
   const [rejectTarget,  setRejectTarget]  = useState(null);
+  const theme  = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   if (loading) return null;
 
@@ -169,8 +171,12 @@ export default function SuggestionQueue({ suggestions, loading, error }) {
                       size="small"
                       sx={{
                         fontSize: 10, height: 18,
-                        bgcolor: s.manufacturer === 'PAUSE' ? '#E3F2FD' : '#E8F5E9',
-                        color:   s.manufacturer === 'PAUSE' ? '#1565C0' : '#2E7D32',
+                        bgcolor: s.manufacturer === 'PAUSE'
+                          ? (isDark ? 'rgba(96,165,250,0.15)' : '#EFF6FF')
+                          : (isDark ? 'rgba(74,222,128,0.12)' : '#F0FDF4'),
+                        color: s.manufacturer === 'PAUSE'
+                          ? (isDark ? '#93C5FD' : '#1D4ED8')
+                          : (isDark ? '#4ADE80' : '#15803D'),
                       }}
                     />
                     <Chip label={s.category} size="small" variant="outlined" sx={{ fontSize: 10, height: 18 }} />
