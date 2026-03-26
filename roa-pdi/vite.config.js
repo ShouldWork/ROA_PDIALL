@@ -7,9 +7,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/firebase')) return 'firebase';
-          if (id.includes('node_modules/@mui')) return 'mui';
+          if (id.includes('node_modules/firebase'))       return 'firebase';
+          if (id.includes('node_modules/@mui'))           return 'mui';
           if (id.includes('node_modules/react-router-dom')) return 'router';
+          if (id.includes('node_modules/recharts'))       return 'recharts';
+          if (id.includes('node_modules/@react-pdf'))     return 'pdf';
         },
       },
     },

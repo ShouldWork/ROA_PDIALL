@@ -1,11 +1,14 @@
 # Code Review Log — ROA PDI Web App
 
-**Review Date:** 2026-03-26  
-**Reviewer:** Claude (automated code review)  
-**Branch Reviewed:** `claude/add-file-upload-zHu1N`  
-**Fix Branch:** `claude/code-review-performance-7lih7`  
-**Scope:** Performance, mobile optimization, UI/UX quality  
+**Review Date:** 2026-03-26
+**Reviewer:** Claude (automated code review)
+**Branch Reviewed:** `claude/add-file-upload-zHu1N`
+**Fix Branch:** `claude/code-review-performance-7lih7` (merged)
+**All remaining issues resolved:** `claude/add-file-upload-zHu1N`
+**Scope:** Performance, mobile optimization, UI/UX quality
 **Focus:** Script/function correctness first, UI/UX second
+
+**Status: All 14 issues resolved ✅**
 
 ---
 
@@ -16,17 +19,17 @@
 | 1 | `src/firebase.js` | 🔴 Critical | ✅ **Fixed** | Deprecated Firestore persistence API |
 | 2 | `src/contexts/AuthContext.jsx` | 🔴 Critical | ✅ **Fixed** | Blocking `await` delays app load on every login |
 | 3 | `src/contexts/AuthContext.jsx` | 🟠 High | ✅ **Fixed** | Context value not memoized — cascading re-renders |
-| 4 | `src/App.jsx` | 🟠 High | 🔲 Open | No `React.lazy` — all pages load eagerly |
-| 5 | `vite.config.js` | 🟠 High | 🔲 Open | `recharts` + `@react-pdf/renderer` not in `manualChunks` |
-| 6 | `src/components/AppShell.jsx` | 🟠 High | 🔲 Open | Nav icon JSX in data array + `getNavItems` not memoized |
-| 7 | `src/components/AppShell.jsx` | 🟠 High | 🔲 Open | `MenuIcon` unused import |
-| 8 | `firestore.rules` | 🟡 Medium | 🔲 Open | `get()` on parent PDI for every item read — doubles Firestore read cost |
-| 9 | `src/index.css` | 🟡 Medium | 🔲 Open | Google Fonts `@import` is render-blocking |
-| 10 | `vite.config.js` | 🟡 Medium | 🔲 Open | PWA icon `purpose: 'any maskable'` is invalid per spec |
-| 11 | `src/components/AppShell.jsx` | 🟠 High (UI) | 🔲 Open | iOS safe area not applied to bottom nav or content area |
-| 12 | `src/components/AppShell.jsx` | 🟡 Medium (UI) | 🔲 Open | `useMediaQuery` causes mobile layout flash |
-| 13 | `src/components/AppShell.jsx` | 🟡 Medium (UI) | 🔲 Open | Bottom nav uses array index as value — breaks with role-filtered nav |
-| 14 | `src/index.css` | 🟡 Medium (UI) | 🔲 Open | No `prefers-reduced-motion` support |
+| 4 | `src/App.jsx` | 🟠 High | ✅ **Fixed** | No `React.lazy` — all pages load eagerly |
+| 5 | `vite.config.js` | 🟠 High | ✅ **Fixed** | `recharts` + `@react-pdf/renderer` not in `manualChunks` |
+| 6 | `src/components/AppShell.jsx` | 🟠 High | ✅ **Fixed** | Nav icon JSX in data array + `getNavItems` not memoized |
+| 7 | `src/components/AppShell.jsx` | 🟠 High | ✅ **Fixed** | `MenuIcon` unused import |
+| 8 | `firestore.rules` | 🟡 Medium | ✅ **Fixed** | `get()` on parent PDI for every item read — doubles Firestore read cost |
+| 9 | `src/index.css` | 🟡 Medium | ✅ **Fixed** | Google Fonts `@import` is render-blocking |
+| 10 | `vite.config.js` | 🟡 Medium | ✅ **Fixed** | PWA icon `purpose: 'any maskable'` is invalid per spec |
+| 11 | `src/components/AppShell.jsx` | 🟠 High (UI) | ✅ **Fixed** | iOS safe area not applied to bottom nav or content area |
+| 12 | `src/components/AppShell.jsx` | 🟡 Medium (UI) | ✅ **Fixed** | `useMediaQuery` causes mobile layout flash |
+| 13 | `src/components/AppShell.jsx` | 🟡 Medium (UI) | ✅ **Fixed** | Bottom nav uses array index as value — breaks with role-filtered nav |
+| 14 | `src/index.css` | 🟡 Medium (UI) | ✅ **Fixed** | No `prefers-reduced-motion` support |
 
 ---
 
@@ -127,9 +130,9 @@ const value = useMemo(() => ({
 
 ---
 
-## Open Issues — Detail
+## Resolved Issues — Detail (continued)
 
-### 🔲 Issue #4 — `src/App.jsx`: No Route-Level Code Splitting
+### ✅ Issue #4 — `src/App.jsx`: No Route-Level Code Splitting
 
 **Severity:** 🟠 High  
 **Recommended Fix:**  
@@ -149,7 +152,7 @@ const NewPDI    = lazy(() => import('./pages/PDI/NewPDI'));
 
 ---
 
-### 🔲 Issue #5 — `vite.config.js`: Missing Chunk Splits for Heavy Libraries
+### ✅ Issue #5 — `vite.config.js`: Missing Chunk Splits for Heavy Libraries
 
 **Severity:** 🟠 High  
 `recharts` (~500 KB) and `@react-pdf/renderer` (~1.5 MB) are not in `manualChunks`. They will land in the main bundle.
@@ -162,7 +165,7 @@ if (id.includes('node_modules/@react-pdf')) return 'pdf';
 
 ---
 
-### 🔲 Issue #6 — `src/components/AppShell.jsx`: Nav Icons + `getNavItems` Not Memoized
+### ✅ Issue #6 — `src/components/AppShell.jsx`: Nav Icons + `getNavItems` Not Memoized
 
 **Severity:** 🟠 High  
 JSX icon elements instantiated inside the nav data array are recreated on every call. `getNavItems` is called on every render.
@@ -181,14 +184,14 @@ const items = useMemo(() => NAV_ITEMS.filter(i => i.roles.includes(role)), [role
 
 ---
 
-### 🔲 Issue #7 — `src/components/AppShell.jsx`: `MenuIcon` Unused Import
+### ✅ Issue #7 — `src/components/AppShell.jsx`: `MenuIcon` Unused Import
 
 **Severity:** 🟠 High  
 Remove: `import MenuIcon from '@mui/icons-material/Menu';`
 
 ---
 
-### 🔲 Issue #8 — `firestore.rules`: `get()` on Parent PDI Per Item Read
+### ✅ Issue #8 — `firestore.rules`: `get()` on Parent PDI Per Item Read
 
 **Severity:** 🟡 Medium  
 Every `pdis/{pdiId}/items/{itemId}` read/write triggers an extra Firestore document read for the parent PDI (to check `assignedTo`). This doubles per-item operation cost.
@@ -198,21 +201,21 @@ Denormalize `assignedTo` onto each item document at creation time, or add it as 
 
 ---
 
-### 🔲 Issue #9 — `src/index.css`: Render-Blocking Google Fonts Import
+### ✅ Issue #9 — `src/index.css`: Render-Blocking Google Fonts Import
 
 **Severity:** 🟡 Medium  
 `@import url(...)` inside CSS is render-blocking. Move to `index.html` with `<link rel="preconnect">` and non-blocking `media="print" onload="this.media='all'"` pattern. Remove `@import` from CSS.
 
 ---
 
-### 🔲 Issue #10 — `vite.config.js`: Invalid PWA Icon `purpose` Value
+### ✅ Issue #10 — `vite.config.js`: Invalid PWA Icon `purpose` Value
 
 **Severity:** 🟡 Medium  
 `purpose: 'any maskable'` is not a valid single value per the Web App Manifest spec. Split into two separate icon entries per size — one `purpose: 'any'` and one `purpose: 'maskable'`.
 
 ---
 
-### 🔲 Issue #11 — `src/components/AppShell.jsx`: iOS Safe Area Not Applied
+### ✅ Issue #11 — `src/components/AppShell.jsx`: iOS Safe Area Not Applied
 
 **Severity:** 🟠 High (UI/UX)  
 `viewport-fit=cover` is set in `index.html` (edge-to-edge mode) but the bottom nav has no `paddingBottom: 'env(safe-area-inset-bottom)'`. On iPhone X+ the nav overlaps the home indicator.
@@ -226,7 +229,7 @@ Denormalize `assignedTo` onto each item document at creation time, or add it as 
 
 ---
 
-### 🔲 Issue #12 — `src/components/AppShell.jsx`: Mobile Layout Flash on First Render
+### ✅ Issue #12 — `src/components/AppShell.jsx`: Mobile Layout Flash on First Render
 
 **Severity:** 🟡 Medium (UI/UX)  
 `useMediaQuery` returns `false` (desktop) before the browser evaluates the media query, causing a layout flash for mobile users.
@@ -238,7 +241,7 @@ const isMobile = useMediaQuery(theme.breakpoints.down('md'), { defaultMatches: t
 
 ---
 
-### 🔲 Issue #13 — `src/components/AppShell.jsx`: Bottom Nav Uses Array Index as Value
+### ✅ Issue #13 — `src/components/AppShell.jsx`: Bottom Nav Uses Array Index as Value
 
 **Severity:** 🟡 Medium (UI/UX)  
 Role-filtered nav arrays have different lengths per user type. Using array index as `BottomNavigation` value means index `2` maps to different routes for different roles.
@@ -247,7 +250,7 @@ Role-filtered nav arrays have different lengths per user type. Using array index
 
 ---
 
-### 🔲 Issue #14 — `src/index.css`: No `prefers-reduced-motion` Support
+### ✅ Issue #14 — `src/index.css`: No `prefers-reduced-motion` Support
 
 **Severity:** 🟡 Medium (UI/UX)  
 No reduced motion support for accessibility and lower-end mobile devices.
@@ -267,7 +270,6 @@ No reduced motion support for accessibility and lower-end mobile devices.
 ## Summary
 
 - **Total issues flagged:** 14
-- **Critical fixed:** 2 (issues #1, #2) — also fixed #3 as part of same file touch
-- **High open:** 4 (issues #4, #5, #6, #7) + 1 UI (issue #11)
-- **Medium open:** 4 (issues #8, #9, #10) + 3 UI (issues #12, #13, #14)
-- **Recommended next action:** Address issues #4–#7 before Phase 2 pages are built out
+- **All 14 resolved ✅**
+- **Build verified clean** after all fixes — zero vulnerabilities, zero warnings
+- **Recommended next action:** Begin Phase 2 — PDI creation flow and checklist interface

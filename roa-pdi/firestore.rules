@@ -67,16 +67,24 @@ service cloud.firestore {
       );
       allow delete: if isAdmin();
 
-      // PDI item subcollection
+      // PDI item subcollection.
+      // assignedTo is denormalized onto each item at creation so we can
+      // check it directly — eliminates a get() on the parent PDI document
+      // that would otherwise double the Firestore read cost per item. (fix: issue #8)
       match /items/{itemId} {
         allow read: if isSignedIn() && isActive() && (
           isAdminOrSW()
-          || get(/databases/$(database)/documents/pdis/$(pdiId)).data.assignedTo == request.auth.uid
+          || resource.data.assignedTo == request.auth.uid
         );
-        allow write: if isSignedIn() && isActive() && (
+        allow create: if isSignedIn() && isActive() && (
           isAdminOrSW()
-          || get(/databases/$(database)/documents/pdis/$(pdiId)).data.assignedTo == request.auth.uid
+          || request.resource.data.assignedTo == request.auth.uid
         );
+        allow update: if isSignedIn() && isActive() && (
+          isAdminOrSW()
+          || resource.data.assignedTo == request.auth.uid
+        );
+        allow delete: if isAdmin();
       }
     }
 
