@@ -1,29 +1,9 @@
 export const STATUS_CONFIG = {
-  not_started: {
-    label: 'Not Started',
-    chipColor: 'default',
-    color: '#757575',
-  },
-  in_progress: {
-    label: 'In Progress',
-    chipColor: 'primary',
-    color: '#1565C0',
-  },
-  paused: {
-    label: 'Paused',
-    chipColor: 'warning',
-    color: '#F57F17',
-  },
-  completed: {
-    label: 'Completed',
-    chipColor: 'success',
-    color: '#2E7D32',
-  },
-  unable_to_complete: {
-    label: 'Unable to Complete',
-    chipColor: 'error',
-    color: '#C62828',
-  },
+  not_started:        { label: 'Not Started',        chipColor: 'default' },
+  in_progress:        { label: 'In Progress',        chipColor: 'primary' },
+  paused:             { label: 'Paused',             chipColor: 'warning' },
+  completed:          { label: 'Completed',          chipColor: 'success' },
+  unable_to_complete: { label: 'Unable to Complete', chipColor: 'error'   },
 };
 
 // Valid status transitions per current status

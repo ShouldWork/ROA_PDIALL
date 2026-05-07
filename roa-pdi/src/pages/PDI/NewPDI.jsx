@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, TextField, Button,
   MenuItem, Select, FormControl, InputLabel, FormHelperText,
-  Stack, Alert, CircularProgress, Divider, Chip,
+  Stack, Alert, CircularProgress, Divider, Chip, useTheme,
 } from '@mui/material';
 import ArrowBackIcon   from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -11,6 +11,7 @@ import { useAuth }     from '../../contexts/AuthContext';
 import { useTechnicians } from '../../hooks/useActiveUsers';
 import { isRONumberUnique, createPDI } from '../../services/pdi';
 import { fetchTemplateItems }          from '../../services/template';
+import { getMfrChipSx }                from '../../utils/manufacturers';
 
 const MANUFACTURERS = [
   { value: 'PAUSE', label: 'PAUSE', desc: 'Pause Trailers' },
@@ -21,6 +22,7 @@ export default function NewPDI() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { technicians, loading: techLoading } = useTechnicians();
+  const isDark = useTheme().palette.mode === 'dark';
 
   const [roNumber,     setRONumber]     = useState('');
   const [manufacturer, setManufacturer] = useState('');
@@ -153,11 +155,7 @@ export default function NewPDI() {
                         <Chip
                           label={m.label}
                           size="small"
-                          sx={{
-                            fontWeight: 600,
-                            bgcolor: m.value === 'PAUSE' ? '#E3F2FD' : '#E8F5E9',
-                            color:   m.value === 'PAUSE' ? '#1565C0' : '#2E7D32',
-                          }}
+                          sx={{ fontWeight: 600, ...getMfrChipSx(m.value, isDark) }}
                         />
                         <Typography variant="body2">{m.desc}</Typography>
                       </Stack>

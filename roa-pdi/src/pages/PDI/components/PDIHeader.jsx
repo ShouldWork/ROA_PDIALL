@@ -9,6 +9,7 @@ import {
   STATUS_CONFIG, ALLOWED_TRANSITIONS, TRANSITION_LABELS, getProgressStats,
 } from '../../../utils/pdiStatus';
 import { computeElapsed, formatElapsed } from '../../../utils/time';
+import { getMfrChipSx } from '../../../utils/manufacturers';
 
 export default function PDIHeader({ pdi, items, onTransition, transitioning }) {
   const [elapsed,   setElapsed]   = useState(0);
@@ -61,15 +62,7 @@ export default function PDIHeader({ pdi, items, onTransition, transitioning }) {
             <Chip
               label={pdi?.manufacturer}
               size="small"
-              sx={{
-                fontWeight: 600, fontSize: 11,
-                bgcolor: pdi?.manufacturer === 'PAUSE'
-                  ? (isDark ? 'rgba(96,165,250,0.15)' : '#EFF6FF')
-                  : (isDark ? 'rgba(74,222,128,0.12)' : '#F0FDF4'),
-                color: pdi?.manufacturer === 'PAUSE'
-                  ? (isDark ? '#93C5FD' : '#1D4ED8')
-                  : (isDark ? '#4ADE80' : '#15803D'),
-              }}
+              sx={{ fontWeight: 600, fontSize: 11, ...getMfrChipSx(pdi?.manufacturer, isDark) }}
             />
             <Chip
               label={cfg.label}

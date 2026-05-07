@@ -10,6 +10,7 @@ import EditIcon       from '@mui/icons-material/Edit';
 import DeleteIcon     from '@mui/icons-material/Delete';
 import { toggleTemplateItemActive, deleteTemplateItem } from '../../../services/template';
 import { useAuth } from '../../../contexts/AuthContext';
+import { getMfrChipSx } from '../../../utils/manufacturers';
 
 function DeleteDialog({ item, open, onClose, onDeleted }) {
   const [deleting, setDeleting] = useState(false);
@@ -108,15 +109,7 @@ function ItemRow({ item, onEdit }) {
                 key={m}
                 label={m}
                 size="small"
-                sx={{
-                  fontSize: 10, height: 18,
-                  bgcolor: m === 'PAUSE'
-                    ? (isDark ? 'rgba(96,165,250,0.15)' : '#EFF6FF')
-                    : (isDark ? 'rgba(74,222,128,0.12)' : '#F0FDF4'),
-                  color: m === 'PAUSE'
-                    ? (isDark ? '#93C5FD' : '#1D4ED8')
-                    : (isDark ? '#4ADE80' : '#15803D'),
-                }}
+                sx={{ fontSize: 10, height: 18, ...getMfrChipSx(m, isDark) }}
               />
             ))}
           </Stack>

@@ -83,7 +83,7 @@ export default function AccessoryChecklist({ pdiId, accessories, uid, disabled }
 
   return (
     <Box>
-      {Object.entries(groups).map(([group, items], gi) => (
+      {Object.entries(groups).map(([group, items]) => (
         <Card key={group} sx={{ mb: 2 }}>
           <CardContent sx={{ pb: '12px !important' }}>
             <Typography variant="subtitle2" fontWeight={700} color="primary" mb={0.5}>

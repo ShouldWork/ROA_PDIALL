@@ -9,6 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { approveSuggestion, rejectSuggestion } from '../../../services/template';
 import { useAuth } from '../../../contexts/AuthContext';
 import { formatDate } from '../../../utils/time';
+import { getMfrChipSx } from '../../../utils/manufacturers';
 
 function RejectDialog({ suggestion, open, onClose }) {
   const { user } = useAuth();
@@ -169,15 +170,7 @@ export default function SuggestionQueue({ suggestions, loading, error }) {
                     <Chip
                       label={s.manufacturer}
                       size="small"
-                      sx={{
-                        fontSize: 10, height: 18,
-                        bgcolor: s.manufacturer === 'PAUSE'
-                          ? (isDark ? 'rgba(96,165,250,0.15)' : '#EFF6FF')
-                          : (isDark ? 'rgba(74,222,128,0.12)' : '#F0FDF4'),
-                        color: s.manufacturer === 'PAUSE'
-                          ? (isDark ? '#93C5FD' : '#1D4ED8')
-                          : (isDark ? '#4ADE80' : '#15803D'),
-                      }}
+                      sx={{ fontSize: 10, height: 18, ...getMfrChipSx(s.manufacturer, isDark) }}
                     />
                     <Chip label={s.category} size="small" variant="outlined" sx={{ fontSize: 10, height: 18 }} />
                     {s.subcategory && (

@@ -107,57 +107,40 @@ export async function createPDI(
 
 // ── Status transitions ────────────────────────────────────────────────────────
 
-export async function startPDI(pdiId, uid) {
+// Private helper — the 5 public transitions all share this shape, only
+// differing in the target status and which timer fields they touch.
+function setPDIStatus(pdiId, status, uid, extraFields = {}) {
+  return updateDoc(doc(db, 'pdis', pdiId), {
+    status,
+    statusHistory: arrayUnion({
+      status, changedAt: new Date().toISOString(), changedBy: uid,
+    }),
+    ...extraFields,
+  });
+}
+
+export function startPDI(pdiId, uid) {
   const now = serverTimestamp();
-  await updateDoc(doc(db, 'pdis', pdiId), {
-    status:        'in_progress',
-    startedAt:     now,
-    lastResumedAt: now,
-    statusHistory: arrayUnion({
-      status: 'in_progress', changedAt: new Date().toISOString(), changedBy: uid,
-    }),
-  });
+  return setPDIStatus(pdiId, 'in_progress', uid, { startedAt: now, lastResumedAt: now });
 }
 
-export async function pausePDI(pdiId, uid, currentElapsedSeconds) {
-  await updateDoc(doc(db, 'pdis', pdiId), {
-    status:             'paused',
-    timeElapsedSeconds: currentElapsedSeconds,
-    statusHistory: arrayUnion({
-      status: 'paused', changedAt: new Date().toISOString(), changedBy: uid,
-    }),
-  });
+export function pausePDI(pdiId, uid, currentElapsedSeconds) {
+  return setPDIStatus(pdiId, 'paused', uid, { timeElapsedSeconds: currentElapsedSeconds });
 }
 
-export async function resumePDI(pdiId, uid) {
-  await updateDoc(doc(db, 'pdis', pdiId), {
-    status:        'in_progress',
-    lastResumedAt: serverTimestamp(),
-    statusHistory: arrayUnion({
-      status: 'in_progress', changedAt: new Date().toISOString(), changedBy: uid,
-    }),
-  });
+export function resumePDI(pdiId, uid) {
+  return setPDIStatus(pdiId, 'in_progress', uid, { lastResumedAt: serverTimestamp() });
 }
 
-export async function completePDI(pdiId, uid, currentElapsedSeconds) {
-  await updateDoc(doc(db, 'pdis', pdiId), {
-    status:             'completed',
+export function completePDI(pdiId, uid, currentElapsedSeconds) {
+  return setPDIStatus(pdiId, 'completed', uid, {
     completedAt:        serverTimestamp(),
     timeElapsedSeconds: currentElapsedSeconds,
-    statusHistory: arrayUnion({
-      status: 'completed', changedAt: new Date().toISOString(), changedBy: uid,
-    }),
   });
 }
 
-export async function markUnableToComplete(pdiId, uid, currentElapsedSeconds) {
-  await updateDoc(doc(db, 'pdis', pdiId), {
-    status:             'unable_to_complete',
-    timeElapsedSeconds: currentElapsedSeconds,
-    statusHistory: arrayUnion({
-      status: 'unable_to_complete', changedAt: new Date().toISOString(), changedBy: uid,
-    }),
-  });
+export function markUnableToComplete(pdiId, uid, currentElapsedSeconds) {
+  return setPDIStatus(pdiId, 'unable_to_complete', uid, { timeElapsedSeconds: currentElapsedSeconds });
 }
 
 // ── Item updates ──────────────────────────────────────────────────────────────

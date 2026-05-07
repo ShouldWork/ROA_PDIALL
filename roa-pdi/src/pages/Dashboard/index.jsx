@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Button, Card, CardActionArea, CardContent,
   Chip, Grid, TextField, InputAdornment, Skeleton, Alert,
-  LinearProgress, Stack, Divider,
+  LinearProgress, Stack, useTheme,
 } from '@mui/material';
 import AddIcon         from '@mui/icons-material/Add';
 import SearchIcon      from '@mui/icons-material/Search';
@@ -13,6 +13,7 @@ import { usePDIList }  from '../../hooks/usePDIList';
 import { useAuth }     from '../../contexts/AuthContext';
 import { STATUS_CONFIG } from '../../utils/pdiStatus';
 import { formatDate }  from '../../utils/time';
+import { getMfrChipSx } from '../../utils/manufacturers';
 
 const STATUS_FILTERS = [
   { value: 'all',                label: 'All' },
@@ -69,7 +70,7 @@ function StatCard({ label, value, color }) {
   );
 }
 
-function PDICard({ pdi, onClick }) {
+function PDICard({ pdi, onClick, isDark }) {
   const cfg     = STATUS_CONFIG[pdi.status] ?? STATUS_CONFIG.not_started;
   const isCombo = pdi.status !== 'not_started';
 
@@ -86,11 +87,7 @@ function PDICard({ pdi, onClick }) {
               <Chip
                 label={pdi.manufacturer}
                 size="small"
-                sx={{
-                  fontWeight: 600, fontSize: 11,
-                  bgcolor: pdi.manufacturer === 'PAUSE' ? '#E3F2FD' : '#E8F5E9',
-                  color:   pdi.manufacturer === 'PAUSE' ? '#1565C0' : '#2E7D32',
-                }}
+                sx={{ fontWeight: 600, fontSize: 11, ...getMfrChipSx(pdi.manufacturer, isDark) }}
               />
               <Chip
                 label={cfg.label}
@@ -131,6 +128,7 @@ export default function Dashboard() {
   const { userProfile, isAdmin, isServiceWriter } = useAuth();
   const { pdis, loading, error } = usePDIList();
   const navigate = useNavigate();
+  const isDark   = useTheme().palette.mode === 'dark';
 
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -287,6 +285,7 @@ export default function Dashboard() {
         <PDICard
           key={pdi.id}
           pdi={pdi}
+          isDark={isDark}
           onClick={() => navigate(`/pdi/${pdi.id}`)}
         />
       ))}
