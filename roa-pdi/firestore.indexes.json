@@ -17,6 +17,14 @@
       ]
     },
     {
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "sort",     "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "pdi_template_items",
       "queryScope": "COLLECTION",
       "fields": [

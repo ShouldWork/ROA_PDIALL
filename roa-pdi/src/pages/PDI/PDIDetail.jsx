@@ -15,11 +15,20 @@ import PDIHeader           from './components/PDIHeader';
 import ItemCard            from './components/ItemCard';
 import AccessoryChecklist  from './components/AccessoryChecklist';
 import SuggestItemDrawer   from './components/SuggestItemDrawer';
+import ReportPanel         from './components/ReportPanel';
 
 // Determines if the current user can edit this PDI
 function canEdit(pdi, userProfile) {
   if (!pdi || !userProfile) return false;
   if (['completed', 'unable_to_complete'].includes(pdi.status)) return false;
+  if (userProfile.role === 'admin' || userProfile.role === 'service_writer') return true;
+  return pdi.assignedTo === userProfile.uid;
+}
+
+// Who can generate/regenerate reports. Unlike editing, this stays available
+// after completion — admins, service writers, and the assigned technician.
+function canGenerateReports(pdi, userProfile) {
+  if (!pdi || !userProfile) return false;
   if (userProfile.role === 'admin' || userProfile.role === 'service_writer') return true;
   return pdi.assignedTo === userProfile.uid;
 }
@@ -144,6 +153,16 @@ export default function PDIDetail() {
           This PDI is {pdi.status === 'completed' ? 'complete' : 'marked unable to complete'}.
           Items are read-only.
         </Alert>
+      )}
+
+      {/* Reports — available once the inspection is complete */}
+      {pdi.status === 'completed' && (
+        <ReportPanel
+          pdi={pdi}
+          items={items}
+          uid={user.uid}
+          canGenerate={canGenerateReports(pdi, userProfile)}
+        />
       )}
 
       {/* Category tabs */}

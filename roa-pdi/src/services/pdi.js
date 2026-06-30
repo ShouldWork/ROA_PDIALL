@@ -143,6 +143,22 @@ export function markUnableToComplete(pdiId, uid, currentElapsedSeconds) {
   return setPDIStatus(pdiId, 'unable_to_complete', uid, { timeElapsedSeconds: currentElapsedSeconds });
 }
 
+// ── Reports ───────────────────────────────────────────────────────────────────
+
+/**
+ * Persist the generated report download URLs onto the PDI document.
+ * reportUrl = customer-facing report, internalReportUrl = internal report.
+ * Called after both PDFs are uploaded to Storage.
+ */
+export function setReportUrls(pdiId, { reportUrl, internalReportUrl }, uid) {
+  return updateDoc(doc(db, 'pdis', pdiId), {
+    reportUrl,
+    internalReportUrl,
+    reportGeneratedAt: serverTimestamp(),
+    reportGeneratedBy: uid,
+  });
+}
+
 // ── Item updates ──────────────────────────────────────────────────────────────
 
 /**
