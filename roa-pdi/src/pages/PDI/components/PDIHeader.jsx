@@ -5,29 +5,38 @@ import {
 } from '@mui/material';
 import TimerIcon      from '@mui/icons-material/Timer';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import {
-  STATUS_CONFIG, ALLOWED_TRANSITIONS, TRANSITION_LABELS, getProgressStats,
+  STATUS_CONFIG, TRANSITION_LABELS, getProgressStats,
 } from '../../../utils/pdiStatus';
 import { computeElapsed, formatElapsed } from '../../../utils/time';
 import { getMfrChipSx } from '../../../utils/manufacturers';
 
-export default function PDIHeader({ pdi, items, onTransition, transitioning }) {
-  const [elapsed,   setElapsed]   = useState(0);
+export default function PDIHeader({ pdi, items, transitions = [], onTransition, transitioning, canDelete, onDelete }) {
   const [anchorEl,  setAnchorEl]  = useState(null);
+  const [, setTick] = useState(0);
 
-  // Live timer — ticks every second while in_progress
+  // Live timer — derive elapsed on each render (so it updates immediately when
+  // the PDI changes) and force a re-render every second while in_progress. The
+  // interval only bumps a tick counter; no state is set in the effect body.
   useEffect(() => {
-    setElapsed(computeElapsed(pdi));
     if (pdi?.status !== 'in_progress') return;
-    const id = setInterval(() => setElapsed(computeElapsed(pdi)), 1000);
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
-  }, [pdi]);
+  }, [pdi?.status]);
+
+  const elapsed = computeElapsed(pdi);
 
   const theme       = useTheme();
   const isDark      = theme.palette.mode === 'dark';
   const cfg         = STATUS_CONFIG[pdi?.status] ?? STATUS_CONFIG.not_started;
-  const transitions = ALLOWED_TRANSITIONS[pdi?.status] ?? [];
   const stats       = getProgressStats(items);
+
+  // From unable_to_complete, moving to in_progress is a reopen, not a fresh start.
+  const transitionLabel = (s) =>
+    pdi?.status === 'unable_to_complete' && s === 'in_progress'
+      ? 'Reopen PDI'
+      : TRANSITION_LABELS[s];
 
   const handleTransition = (newStatus) => {
     setAnchorEl(null);
@@ -105,19 +114,36 @@ export default function PDIHeader({ pdi, items, onTransition, transitioning }) {
         />
       </Box>
 
-      {/* Status action button */}
-      {transitions.length > 0 && (
+      {/* Action row — status transitions and, for admins, delete */}
+      {(transitions.length > 0 || canDelete) && (
         <>
           <Divider sx={{ mb: 1.5 }} />
-          <Button
-            variant="outlined"
-            size="small"
-            endIcon={transitioning ? <CircularProgress size={14} /> : <ExpandMoreIcon />}
-            onClick={(e) => setAnchorEl(e.currentTarget)}
-            disabled={transitioning}
-          >
-            Change Status
-          </Button>
+          <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+            {transitions.length > 0 && (
+              <Button
+                variant="outlined"
+                size="small"
+                endIcon={transitioning ? <CircularProgress size={14} /> : <ExpandMoreIcon />}
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                disabled={transitioning}
+              >
+                Change Status
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="text"
+                size="small"
+                color="error"
+                startIcon={<DeleteOutlineIcon />}
+                onClick={onDelete}
+                disabled={transitioning}
+                sx={{ ml: 'auto' }}
+              >
+                Delete PDI
+              </Button>
+            )}
+          </Stack>
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
@@ -131,7 +157,7 @@ export default function PDIHeader({ pdi, items, onTransition, transitioning }) {
                   color={STATUS_CONFIG[s]?.chipColor}
                   sx={{ mr: 1, fontWeight: 500 }}
                 />
-                {TRANSITION_LABELS[s]}
+                {transitionLabel(s)}
               </MenuItem>
             ))}
           </Menu>

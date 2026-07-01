@@ -3,14 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Tabs, Tab, Button, Alert,
   CircularProgress, Stack, Skeleton,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { usePDI }    from '../../hooks/usePDI';
 import { useAuth }   from '../../contexts/AuthContext';
 import {
   startPDI, pausePDI, resumePDI, completePDI,
-  markUnableToComplete, updateItemStats,
+  markUnableToComplete, updateItemStats, deletePDI,
 } from '../../services/pdi';
+import { availableTransitions } from '../../utils/pdiStatus';
 import PDIHeader           from './components/PDIHeader';
 import ItemCard            from './components/ItemCard';
 import AccessoryChecklist  from './components/AccessoryChecklist';
@@ -43,8 +45,25 @@ export default function PDIDetail() {
   const [activeTab,    setActiveTab]    = useState(0);
   const [transitioning,setTransitioning]= useState(false);
   const [transError,   setTransError]   = useState('');
+  const [deleteOpen,   setDeleteOpen]   = useState(false);
+  const [deleting,     setDeleting]     = useState(false);
+  const [deleteError,  setDeleteError]  = useState('');
 
-  const editable = canEdit(pdi, userProfile);
+  const editable    = canEdit(pdi, userProfile);
+  const canDelete   = userProfile?.role === 'admin';
+  const transitions = availableTransitions(pdi?.status, userProfile?.role);
+
+  async function handleDelete() {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await deletePDI(id);
+      navigate('/');
+    } catch (err) {
+      setDeleteError(err.message || 'Delete failed. Please try again.');
+      setDeleting(false);
+    }
+  }
 
   async function handleTransition(newStatus, currentElapsed) {
     setTransitioning(true);
@@ -127,8 +146,11 @@ export default function PDIDetail() {
       <PDIHeader
         pdi={pdi}
         items={items}
+        transitions={transitions}
         onTransition={handleTransition}
         transitioning={transitioning}
+        canDelete={canDelete}
+        onDelete={() => setDeleteOpen(true)}
       />
 
       {transError && (
@@ -216,6 +238,36 @@ export default function PDIDetail() {
       {editable && pdi.status === 'in_progress' && (
         <SuggestItemDrawer manufacturer={pdi.manufacturer} />
       )}
+
+      {/* Delete confirmation — admin only */}
+      <Dialog open={deleteOpen} onClose={() => !deleting && setDeleteOpen(false)}>
+        <DialogTitle>Delete this PDI?</DialogTitle>
+        <DialogContent>
+          <DialogContentText component="div">
+            RO {pdi.repairOrderNumber} and its {items.length} inspection items, photos, and reports
+            will be permanently deleted.
+            {pdi.status === 'completed' && ' Its contribution to analytics will also be reversed.'}
+            {' '}This cannot be undone.
+          </DialogContentText>
+          {deleteError && (
+            <Alert severity="error" sx={{ mt: 2 }}>{deleteError}</Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDelete}
+            disabled={deleting}
+            startIcon={deleting ? <CircularProgress size={14} color="inherit" /> : null}
+          >
+            {deleting ? 'Deleting…' : 'Delete PDI'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

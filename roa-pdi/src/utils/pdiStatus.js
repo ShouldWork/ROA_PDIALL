@@ -12,8 +12,19 @@ export const ALLOWED_TRANSITIONS = {
   in_progress:        ['paused', 'completed', 'unable_to_complete'],
   paused:             ['in_progress', 'unable_to_complete'],
   completed:          [],
-  unable_to_complete: [],
+  unable_to_complete: ['in_progress'], // reopen — admin/service_writer only, see availableTransitions
 };
+
+// Transitions available to a given role. Reopening a PDI that was marked unable
+// to complete is limited to admins and service writers; technicians only move a
+// PDI forward, never back out of a finished state.
+export function availableTransitions(status, role) {
+  const base = ALLOWED_TRANSITIONS[status] ?? [];
+  if (status === 'unable_to_complete' && !(role === 'admin' || role === 'service_writer')) {
+    return [];
+  }
+  return base;
+}
 
 export const TRANSITION_LABELS = {
   in_progress:        'Start PDI',

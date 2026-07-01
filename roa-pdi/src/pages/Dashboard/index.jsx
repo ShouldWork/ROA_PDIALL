@@ -3,15 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Button, Card, CardActionArea, CardContent,
   Chip, Grid, TextField, InputAdornment, Skeleton, Alert,
-  LinearProgress, Stack, useTheme,
+  LinearProgress, Stack, IconButton, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+  useTheme,
 } from '@mui/material';
-import AddIcon         from '@mui/icons-material/Add';
-import SearchIcon      from '@mui/icons-material/Search';
-import AccessTimeIcon  from '@mui/icons-material/AccessTime';
-import PersonIcon      from '@mui/icons-material/Person';
+import AddIcon           from '@mui/icons-material/Add';
+import SearchIcon        from '@mui/icons-material/Search';
+import AccessTimeIcon    from '@mui/icons-material/AccessTime';
+import PersonIcon        from '@mui/icons-material/Person';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { usePDIList }  from '../../hooks/usePDIList';
 import { useAuth }     from '../../contexts/AuthContext';
 import { STATUS_CONFIG, passRateColor } from '../../utils/pdiStatus';
+import { deletePDI }   from '../../services/pdi';
 import { formatDate }  from '../../utils/time';
 import { getMfrChipSx } from '../../utils/manufacturers';
 
@@ -70,14 +74,14 @@ function StatCard({ label, value, color }) {
   );
 }
 
-function PDICard({ pdi, onClick, isDark }) {
+function PDICard({ pdi, onClick, isDark, canDelete, onDelete }) {
   const cfg     = STATUS_CONFIG[pdi.status] ?? STATUS_CONFIG.not_started;
   const isCombo = pdi.status !== 'not_started';
 
   return (
-    <Card sx={{ mb: 1.5 }}>
+    <Card sx={{ mb: 1.5, position: 'relative' }}>
       <CardActionArea onClick={onClick} sx={{ p: 0 }}>
-        <CardContent>
+        <CardContent sx={{ pr: canDelete ? 5 : undefined }}>
           {/* Top row */}
           <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5}>
             <Typography variant="subtitle1" fontWeight={700}>
@@ -120,6 +124,22 @@ function PDICard({ pdi, onClick, isDark }) {
           <PDIProgress summary={pdi.progressSummary} isDark={isDark} />
         </CardContent>
       </CardActionArea>
+      {canDelete && (
+        <IconButton
+          aria-label={`Delete ${pdi.repairOrderNumber}`}
+          size="small"
+          onClick={() => onDelete(pdi)}
+          sx={{
+            position: 'absolute',
+            top: 6,
+            right: 6,
+            color: 'text.secondary',
+            '&:hover': { color: 'error.main' },
+          }}
+        >
+          <DeleteOutlineIcon fontSize="small" />
+        </IconButton>
+      )}
     </Card>
   );
 }
@@ -133,8 +153,25 @@ export default function Dashboard() {
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [mfrFilter,    setMfrFilter]    = useState('all');
+  const [pdiToDelete,  setPdiToDelete]  = useState(null);
+  const [deleting,     setDeleting]     = useState(false);
+  const [deleteError,  setDeleteError]  = useState('');
 
   const canCreate = isAdmin || isServiceWriter;
+
+  async function handleDelete() {
+    if (!pdiToDelete) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await deletePDI(pdiToDelete.id);
+      setPdiToDelete(null); // the live list listener removes the card
+    } catch (err) {
+      setDeleteError(err.message || 'Delete failed. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const filtered = useMemo(() => {
     return pdis.filter((p) => {
@@ -288,8 +325,40 @@ export default function Dashboard() {
           pdi={pdi}
           isDark={isDark}
           onClick={() => navigate(`/pdi/${pdi.id}`)}
+          canDelete={isAdmin}
+          onDelete={setPdiToDelete}
         />
       ))}
+
+      {/* Delete confirmation — admin only */}
+      <Dialog open={Boolean(pdiToDelete)} onClose={() => !deleting && setPdiToDelete(null)}>
+        <DialogTitle>Delete this PDI?</DialogTitle>
+        <DialogContent>
+          <DialogContentText component="div">
+            RO {pdiToDelete?.repairOrderNumber} and all of its items, photos, and reports
+            will be permanently deleted.
+            {pdiToDelete?.status === 'completed' && ' Its contribution to analytics will also be reversed.'}
+            {' '}This cannot be undone.
+          </DialogContentText>
+          {deleteError && (
+            <Alert severity="error" sx={{ mt: 2 }}>{deleteError}</Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPdiToDelete(null)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDelete}
+            disabled={deleting}
+            startIcon={deleting ? <CircularProgress size={14} color="inherit" /> : null}
+          >
+            {deleting ? 'Deleting…' : 'Delete PDI'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

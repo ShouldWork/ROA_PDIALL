@@ -1,8 +1,9 @@
 import {
-  collection, doc, updateDoc, getDocs, runTransaction,
+  collection, doc, updateDoc, getDoc, getDocs, deleteDoc, runTransaction,
   query, where, writeBatch, serverTimestamp, arrayUnion, arrayRemove, increment,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { ref, deleteObject } from 'firebase/storage';
+import { db, storage } from '../firebase';
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
@@ -216,9 +217,13 @@ export async function removeImageFromItem(pdiId, itemId, imageUrl, uid) {
   });
 }
 
-// ── Item stats (called on PDI completion) ─────────────────────────────────────
+// ── Item stats ────────────────────────────────────────────────────────────────
 
-export async function updateItemStats(items, manufacturer) {
+// Apply a signed delta to the item_stats aggregates for a PDI's evaluated
+// checklist items. sign = +1 on completion (updateItemStats), -1 when a
+// completed PDI is deleted (reverseItemStats), so the analytics counters a PDI
+// contributed are removed cleanly with it.
+async function applyItemStatsDelta(items, manufacturer, sign) {
   const evaluated = items.filter((i) => !i.isAccessory && i.result && i.result !== 'untested');
   const failed    = items.filter((i) => !i.isAccessory && i.result === 'fail');
   const allTemplateIds = [...new Set(evaluated.map((i) => i.templateId))];
@@ -232,11 +237,61 @@ export async function updateItemStats(items, manufacturer) {
       batch.set(statRef, {
         templateId,
         manufacturer,
-        totalEvaluated: increment(1),
-        totalFailed:    increment(isFailed ? 1 : 0),
+        totalEvaluated: increment(sign),
+        totalFailed:    increment(isFailed ? sign : 0),
         lastUpdated:    serverTimestamp(),
       }, { merge: true });
     }
     await batch.commit();
   }
+}
+
+// Called on PDI completion.
+export function updateItemStats(items, manufacturer) {
+  return applyItemStatsDelta(items, manufacturer, 1);
+}
+
+// ── Delete ──────────────────────────────────────────────────────────────────
+
+/**
+ * Permanently delete a PDI: reverse its analytics contribution (completed PDIs
+ * only), remove its photos and reports from Storage (best-effort), delete every
+ * item in the subcollection, then delete the PDI document itself.
+ *
+ * Admin-only — enforced by Firestore security rules and the calling UI.
+ * Storage failures never block the delete: a denied or already-missing object
+ * must not strand the PDI document.
+ */
+export async function deletePDI(pdiId) {
+  const pdiRef  = doc(db, 'pdis', pdiId);
+  const pdiSnap = await getDoc(pdiRef);
+  if (!pdiSnap.exists()) return;
+  const pdi = pdiSnap.data();
+
+  const itemsSnap = await getDocs(collection(db, 'pdis', pdiId, 'items'));
+  const items = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  // 1. Reverse analytics — completion is the only path that incremented stats.
+  if (pdi.status === 'completed') {
+    await applyItemStatsDelta(items, pdi.manufacturer, -1);
+  }
+
+  // 2. Best-effort Storage cleanup (item photos + both report PDFs).
+  const urls = [
+    ...items.flatMap((i) => i.images || []),
+    pdi.reportUrl,
+    pdi.internalReportUrl,
+  ].filter(Boolean);
+  await Promise.allSettled(urls.map((url) => deleteObject(ref(storage, url))));
+
+  // 3. Delete the items subcollection in batches, then the PDI doc.
+  const BATCH_SIZE = 490;
+  for (let i = 0; i < itemsSnap.docs.length; i += BATCH_SIZE) {
+    const batch = writeBatch(db);
+    for (const d of itemsSnap.docs.slice(i, i + BATCH_SIZE)) {
+      batch.delete(d.ref);
+    }
+    await batch.commit();
+  }
+  await deleteDoc(pdiRef);
 }
