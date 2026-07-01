@@ -4,6 +4,13 @@ import { createTheme } from '@mui/material/styles';
 const AMBER       = '#F59E0B';
 const AMBER_DARK  = '#D97706';
 
+// Paused status — a cool slate, deliberately NOT amber. `in_progress` owns the
+// primary amber; paused must never read as the same state at a glance (the app
+// principle is "status is the first thing the eye finds"). `warning` stays amber
+// for genuine warnings (fail rate, pending), so paused gets its own token.
+const SLATE       = '#475569';
+const SLATE_DARK  = '#94A3B8';
+
 // Nav is always dark regardless of the user's light/dark preference.
 // Export as constants so AppShell can reference the same values.
 export const NAV_BG        = '#0B0C0F';
@@ -131,6 +138,9 @@ export function buildTheme(mode) {
       success:  { main: isDark ? '#22C55E' : '#16A34A', contrastText: '#fff' },
       error:    { main: isDark ? '#F87171' : '#DC2626', contrastText: '#fff' },
       warning:  { main: AMBER, dark: AMBER_DARK, contrastText: '#000' },
+      paused: isDark
+        ? { main: SLATE_DARK, light: '#CBD5E1', dark: '#64748B', contrastText: '#0B0C0F' }
+        : { main: SLATE,      light: '#64748B', dark: '#334155', contrastText: '#FFFFFF' },
       background: {
         default: isDark ? '#0D0E12' : '#F4F4F5',
         paper:   isDark ? '#16181E' : '#FFFFFF',

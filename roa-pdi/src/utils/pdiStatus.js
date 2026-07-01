@@ -1,7 +1,7 @@
 export const STATUS_CONFIG = {
   not_started:        { label: 'Not Started',        chipColor: 'default' },
   in_progress:        { label: 'In Progress',        chipColor: 'primary' },
-  paused:             { label: 'Paused',             chipColor: 'warning' },
+  paused:             { label: 'Paused',             chipColor: 'paused'  },
   completed:          { label: 'Completed',          chipColor: 'success' },
   unable_to_complete: { label: 'Unable to Complete', chipColor: 'error'   },
 };
@@ -35,6 +35,16 @@ export const ACCESSORY_RESULT_CONFIG = {
   not_present:    { label: 'Not Present', bg: 'error.main',    text: '#fff' },
   not_applicable: { label: 'N/A',         bg: 'text.disabled', text: '#fff' },
 };
+
+// Pass-rate text color, thresholded so a low rate never shows a reassuring
+// green. Returns a legible hex per theme mode: the semantic .main tokens are
+// unusable as text here (warning is amber, ~2:1 on a light surface), so these
+// are text-safe shades that clear WCAG AA on both paper colors.
+export function passRateColor(rate, isDark) {
+  if (rate >= 90) return isDark ? '#4ADE80' : '#166534'; // healthy
+  if (rate >= 75) return isDark ? '#FBBF24' : '#B45309'; // watch
+  return isDark ? '#F87171' : '#B91C1C';                 // poor
+}
 
 // L1: single-pass reduce instead of three separate filter calls over the same array
 export function getProgressStats(items) {

@@ -11,7 +11,7 @@ import AccessTimeIcon  from '@mui/icons-material/AccessTime';
 import PersonIcon      from '@mui/icons-material/Person';
 import { usePDIList }  from '../../hooks/usePDIList';
 import { useAuth }     from '../../contexts/AuthContext';
-import { STATUS_CONFIG } from '../../utils/pdiStatus';
+import { STATUS_CONFIG, passRateColor } from '../../utils/pdiStatus';
 import { formatDate }  from '../../utils/time';
 import { getMfrChipSx } from '../../utils/manufacturers';
 
@@ -31,7 +31,7 @@ const MFR_FILTERS = [
 ];
 
 // L5: extracted from inline IIFE so JSX stays readable
-function PDIProgress({ summary: s }) {
+function PDIProgress({ summary: s, isDark }) {
   if (!s || s.total === 0) return null;
   const evaluated   = (s.pass ?? 0) + (s.fail ?? 0) + (s.not_applicable ?? 0);
   const progressPct = Math.round((evaluated / s.total) * 100);
@@ -42,7 +42,7 @@ function PDIProgress({ summary: s }) {
         <Typography variant="caption" color="text.secondary">
           {evaluated} / {s.total} evaluated
         </Typography>
-        <Typography variant="caption" fontWeight={600} color="success.main">
+        <Typography variant="caption" fontWeight={600} sx={{ color: passRateColor(passRate, isDark) }}>
           {passRate}% pass
         </Typography>
       </Stack>
@@ -117,7 +117,7 @@ function PDICard({ pdi, onClick, isDark }) {
           </Stack>
 
           {/* Progress — only once items have been evaluated */}
-          <PDIProgress summary={pdi.progressSummary} />
+          <PDIProgress summary={pdi.progressSummary} isDark={isDark} />
         </CardContent>
       </CardActionArea>
     </Card>
@@ -125,7 +125,7 @@ function PDICard({ pdi, onClick, isDark }) {
 }
 
 export default function Dashboard() {
-  const { userProfile, isAdmin, isServiceWriter } = useAuth();
+  const { isAdmin, isServiceWriter } = useAuth();
   const { pdis, loading, error } = usePDIList();
   const navigate = useNavigate();
   const isDark   = useTheme().palette.mode === 'dark';
@@ -160,7 +160,7 @@ export default function Dashboard() {
         <Box>
           <Typography variant="h5">Dashboard</Typography>
           <Typography variant="body2" color="text.secondary">
-            Welcome back, {userProfile?.displayName?.split(' ')[0]}
+            {canCreate ? 'All inspections' : 'Your assigned inspections'}
           </Typography>
         </Box>
         {canCreate && (
@@ -185,7 +185,7 @@ export default function Dashboard() {
             <StatCard label="In Progress" value={stats.inProgress} color="primary.main" />
           </Grid>
           <Grid item xs={6} sm={3}>
-            <StatCard label="Paused"      value={stats.paused}     color="warning.main" />
+            <StatCard label="Paused"      value={stats.paused}     color="paused.main" />
           </Grid>
           <Grid item xs={6} sm={3}>
             <StatCard label="Completed"   value={stats.completed}  color="success.main" />
@@ -202,6 +202,7 @@ export default function Dashboard() {
             placeholder="Search by RO number…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            inputProps={{ 'aria-label': 'Search by RO number' }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
